@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Free Fire Rules</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #0f0f0f;
+      font-family: 'Orbitron', sans-serif;
+      color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    header {
+      background: linear-gradient(to right, #ff4d00, #ff9900);
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(255, 77, 0, 0.6);
+      animation: fadeInDown 1s ease-out;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2em;
+      color: #fff;
+      text-shadow: 2px 2px #000;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .rule-card {
+      background: #1a1a1a;
+      border-left: 5px solid #ff4d00;
+      margin: 15px 0;
+      padding: 15px 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ff4d00aa;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      animation: slideUp 0.6s ease-out;
+    }
+
+    .rule-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 15px #ffa500;
+    }
+
+    .rule-title {
+      font-size: 1.2em;
+      color: #ffcc00;
+      margin-bottom: 10px;
+    }
+
+    .rule-desc {
+      font-size: 0.95em;
+      color: #ccc;
+    }
+
+    footer {
+      text-align: center;
+      padding: 15px;
+      background: #111;
+      font-size: 0.8em;
+      color: #888;
+      animation: fadeInUp 1s ease-out;
+    }
+
+    /* Animations */
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes fadeInDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🔥 Free Fire Rules</h1>
+  </header>
+
+  <div class="container">
+    <div class="rule-card">
+      <div class="rule-title">1. No Teaming</div>
+      <div class="rule-desc">Players must not team up with enemies in solo mode. This results in a ban.</div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-title">2. No Hacks or Cheats</div>
+      <div class="rule-desc">Using any kind of cheats (aimbot, wallhack, etc.) is strictly prohibited.</div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-title">3. Respect Other Players</div>
+      <div class="rule-desc">Toxic behavior, harassment, or abuse will not be tolerated.</div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-title">4. No Bug Exploits</div>
+      <div class="rule-desc">Using game bugs or glitches for unfair advantage is against the rules.</div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-title">5. Follow Custom Room Rules</div>
+      <div class="rule-desc">If you're playing in a custom room, follow all organizer rules or be disqualified.</div>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 Free Fire Rules Fan Guide | Not affiliated with Garena
+  </footer>
+
+</body>
+</html>
