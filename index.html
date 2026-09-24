@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instant Payment with Google Apps Script</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Product Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-4">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-16 h-16 bg-indigo-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-code text-2xl text-indigo-600"></i>
+                </div>
+                <div>
+                    <h2 id="productName" class="text-xl font-bold">Premium Script</h2>
+                    <p class="text-gray-600 text-sm">Digital Download • Instant Access</p>
+                </div>
+            </div>
+            
+            <div class="flex items-end justify-between border-t pt-4">
+                <div>
+                    <p class="text-sm text-gray-500">Price</p>
+                    <p class="text-3xl font-bold text-indigo-600">₹<span id="productPrice">1.00</span></p>
+                </div>
+                <button onclick="startPayment()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition flex items-center gap-2">
+                    <i class="fas fa-bolt"></i> Buy Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Payment Modal -->
+        <div id="paymentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-2xl p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto">
+                <!-- Close Button -->
+                <button onclick="closeModal()" class="float-right text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <!-- Payment Screen -->
+                <div id="paymentScreen">
+                    <h3 class="font-bold text-center text-xl mb-2">Pay with UPI</h3>
+                    <p class="text-center text-gray-500 text-sm mb-4">Scan QR code or open UPI app</p>
+                    
+                    <!-- QR Code -->
+                    <div class="flex justify-center mb-4">
+                        <img id="qrCode" src="" alt="QR Code" class="w-48 h-48 border-2 border-gray-200 rounded-xl p-2">
+                    </div>
+                    
+                    <!-- Order ID -->
+                    <p class="text-center text-sm font-mono bg-gray-100 p-2 rounded-lg mb-4">
+                        Order: <span id="orderIdDisplay">Loading...</span>
+                    </p>
+                    
+                    <!-- UPI Apps -->
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <button onclick="openUPIApp('gpay')" class="bg-gray-100 p-3 rounded-lg hover:bg-gray-200 transition">
+                            <span class="font-bold text-sm">📱 GPay</span>
+                        </button>
+                        <button onclick="openUPIApp('phonepe')" class="bg-gray-100 p-3 rounded-lg hover:bg-gray-200 transition">
+                            <span class="font-bold text-sm">📱 PhonePe</span>
+                        </button>
+                        <button onclick="openUPIApp('paytm')" class="bg-gray-100 p-3 rounded-lg hover:bg-gray-200 transition">
+                            <span class="font-bold text-sm">📱 Paytm</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div id="paymentStatus" class="text-center text-sm text-gray-500">
+                        Waiting for payment...
+                    </div>
+                </div>
+
+                <!-- Processing Screen -->
+                <div id="processingScreen" class="hidden text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                    <h4 class="font-bold">Verifying Payment</h4>
+                    <p class="text-sm text-gray-500">Please wait, auto-verifying...</p>
+                    <div class="mt-4 bg-gray-100 rounded-lg p-2">
+                        <p class="text-xs font-mono" id="verificationTimer">Checking...</p>
+                    </div>
+                </div>
+
+                <!-- Success Screen -->
+                <div id="successScreen" class="hidden text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-check text-3xl text-green-600"></i>
+                    </div>
+                    <h4 class="font-bold text-xl mb-2">Payment Successful!</h4>
+                    <p class="text-gray-500 text-sm mb-4">Your download is ready</p>
+                    <a id="downloadLink" href="#" class="block bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition">
+                        <i class="fas fa-download"></i> Download Now
+                    </a>
+                    <p class="text-xs text-gray-400 mt-2">Order: <span id="successOrderId"></span></p>
+                </div>
+
+                <!-- Failed Screen -->
+                <div id="failedScreen" class="hidden text-center">
+                    <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-times text-3xl text-red-600"></i>
+                    </div>
+                    <h4 class="font-bold text-xl mb-2">Payment Failed</h4>
+                    <p class="text-gray-500 text-sm mb-4">Please try again or contact support</p>
+                    <button onclick="retryPayment()" class="bg-indigo-600 text-white py-3 rounded-xl w-full font-semibold hover:bg-indigo-700 transition">
+                        <i class="fas fa-redo"></i> Retry
+                    </button>
+                </div>
+
+                <!-- Footer -->
+                <div class="mt-4 text-center">
+                    <p class="text-xs text-gray-400">
+                        <i class="fas fa-lock"></i> Secured by Google Apps Script
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Verification Modal -->
+        <div id="manualModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-2xl p-6 max-w-sm w-full">
+                <h3 class="font-bold text-xl mb-2">Manual Verification</h3>
+                <p class="text-gray-500 text-sm mb-4">Auto-verification timed out. Enter UTR to confirm payment.</p>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">UTR Number</label>
+                    <input type="text" id="utrInput" placeholder="Enter UTR from UPI app" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                </div>
+                <button onclick="manualVerify()" class="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition">
+                    <i class="fas fa-check"></i> Verify Payment
+                </button>
+                <button onclick="document.getElementById('manualModal').classList.add('hidden')" class="w-full mt-2 text-gray-500 py-2">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const CONFIG = {
+            // Your Google Apps Script Web App URL
+            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwiUL45K9hDfwJghWLG4aI6o6AK8SBGWaVGNUwIQfgZyt-CEesgiD-is0DAWaSSl0_g/exec',
+            
+            // Product Details
+            product: {
+                id: 'script001',
+                name: 'Premium Script',
+                price: '1.00'
+            }
+        };
+
+        // State
+        let currentOrderId = '';
+        let verificationInterval = null;
+        let isProcessing = false;
+
+        // ============================================
+        // 1. START PAYMENT
+        // ============================================
+        async function startPayment() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            try {
+                // Show loading
+                document.getElementById('paymentModal').classList.remove('hidden');
+                document.getElementById('paymentScreen').classList.remove('hidden');
+                document.getElementById('processingScreen').classList.add('hidden');
+                document.getElementById('successScreen').classList.add('hidden');
+                document.getElementById('failedScreen').classList.add('hidden');
+
+                // Create order via Google Apps Script
+                const response = await fetch(CONFIG.SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'create',
+                        productId: CONFIG.product.id,
+                        productName: CONFIG.product.name,
+                        amount: CONFIG.product.price,
+                        userId: getUserId(),
+                        email: getUserEmail()
+                    })
+                });
+
+                // Since we use no-cors, we need to handle response differently
+                // For now, we'll simulate a response
+                // In production, use CORS enabled deployment
+                
+                // Simulate order creation
+                currentOrderId = 'ORD' + Date.now() + Math.random().toString(36).substr(2, 4).toUpperCase();
+                
+                // Generate UPI Link
+                const upiId = 'BHARATPE.8F0F1C2O6L54974@fbpe';
+                const merchantName = 'sachin Odeyar';
+                const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(merchantName)}&am=${CONFIG.product.price}&cu=INR&tn=${encodeURIComponent(CONFIG.product.name)}&txn=${currentOrderId}`;
+                
+                // Generate QR Code
+                const qrCode = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`;
+                
+                // Update UI
+                document.getElementById('qrCode').src = qrCode;
+                document.getElementById('orderIdDisplay').textContent = currentOrderId;
+                
+                // Store order locally
+                storeOrder(currentOrderId);
+                
+                // Start verification
+                startVerification(currentOrderId);
+                
+                // Auto-open UPI app on mobile
+                if (isMobile()) {
+                    setTimeout(() => {
+                        window.location.href = upiLink;
+                    }, 1500);
+                }
+                
+                isProcessing = false;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to create order. Please try again.');
+                isProcessing = false;
+            }
+        }
+
+        // ============================================
+        // 2. START VERIFICATION
+        // ============================================
+        function startVerification(orderId) {
+            let attempts = 0;
+            const maxAttempts = 20; // 100 seconds
+            
+            document.getElementById('paymentScreen').classList.add('hidden');
+            document.getElementById('processingScreen').classList.remove('hidden');
+            
+            verificationInterval = setInterval(async () => {
+                attempts++;
+                document.getElementById('verificationTimer').textContent = `Checking payment... (${attempts}/${maxAttempts})`;
+                
+                // Check payment status via Google Apps Script
+                const verified = await checkPaymentStatus(orderId);
+                
+                if (verified) {
+                    clearInterval(verificationInterval);
+                    paymentSuccess(orderId);
+                    return;
+                }
+                
+                if (attempts >= maxAttempts) {
+                    clearInterval(verificationInterval);
+                    showManualVerification(orderId);
+                }
+            }, 5000);
+        }
+
+        // ============================================
+        // 3. CHECK PAYMENT STATUS
+        // ============================================
+        async function checkPaymentStatus(orderId) {
+            try {
+                // Check locally first
+                const orders = JSON.parse(localStorage.getItem('verifiedOrders') || '[]');
+                if (orders.includes(orderId)) {
+                    return true;
+                }
+                
+                // Check via Google Apps Script
+                const response = await fetch(`${CONFIG.SCRIPT_URL}?action=verify&orderId=${orderId}`);
+                const data = await response.json();
+                
+                if (data.status === 'confirmed') {
+                    return true;
+                }
+                
+                return false;
+            } catch (error) {
+                console.log('Status check failed:', error);
+                return false;
+            }
+        }
+
+        // ============================================
+        // 4. MANUAL VERIFICATION (Fallback)
+        // ============================================
+        function showManualVerification(orderId) {
+            document.getElementById('processingScreen').classList.add('hidden');
+            document.getElementById('manualModal').classList.remove('hidden');
+            document.getElementById('utrInput').value = '';
+            document.getElementById('utrInput').focus();
+        }
+
+        async function manualVerify() {
+            const utr = document.getElementById('utrInput').value.trim();
+            
+            if (!utr) {
+                alert('Please enter the UTR number from your UPI app');
+                return;
+            }
+            
+            // Try to verify via Google Apps Script
+            try {
+                const response = await fetch(CONFIG.SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'webhook',
+                        orderId: currentOrderId,
+                        status: 'confirmed',
+                        utr: utr
+                    })
+                });
+                
+                document.getElementById('manualModal').classList.add('hidden');
+                paymentSuccess(currentOrderId);
+            } catch (error) {
+                // Fallback: Manual confirmation
+                if (confirm(`UTR: ${utr}\nConfirm this payment manually?`)) {
+                    document.getElementById('manualModal').classList.add('hidden');
+                    // Store as verified
+                    const verified = JSON.parse(localStorage.getItem('verifiedOrders') || '[]');
+                    verified.push(currentOrderId);
+                    localStorage.setItem('verifiedOrders', JSON.stringify(verified));
+                    paymentSuccess(currentOrderId);
+                }
+            }
+        }
+
+        // ============================================
+        // 5. PAYMENT SUCCESS
+        // ============================================
+        function paymentSuccess(orderId) {
+            // Update UI
+            document.getElementById('processingScreen').classList.add('hidden');
+            document.getElementById('failedScreen').classList.add('hidden');
+            document.getElementById('successScreen').classList.remove('hidden');
+            
+            // Set download link
+            const downloadLink = `${CONFIG.SCRIPT_URL}?action=download&orderId=${orderId}`;
+            document.getElementById('downloadLink').href = downloadLink;
+            document.getElementById('successOrderId').textContent = orderId;
+            
+            // Store as verified
+            const verified = JSON.parse(localStorage.getItem('verifiedOrders') || '[]');
+            if (!verified.includes(orderId)) {
+                verified.push(orderId);
+                localStorage.setItem('verifiedOrders', JSON.stringify(verified));
+            }
+            
+            // Update order status
+            updateOrderStatus(orderId, 'confirmed');
+            
+            // Auto-close after 5 seconds
+            setTimeout(() => {
+                // Don't auto-close, let user download
+            }, 5000);
+        }
+
+        // ============================================
+        // 6. HELPERS
+        // ============================================
+        function generateOrderId() {
+            const timestamp = Date.now().toString(36).toUpperCase();
+            const random = Math.random().toString(36).substr(2, 4).toUpperCase();
+            return `ORD${timestamp}${random}`;
+        }
+
+        function isMobile() {
+            return /android|iphone|ipad|mobile/i.test(navigator.userAgent);
+        }
+
+        function getUserId() {
+            let userId = localStorage.getItem('userId');
+            if (!userId) {
+                userId = 'user_' + Date.now() + Math.random().toString(36).substr(2, 6);
+                localStorage.setItem('userId', userId);
+            }
+            return userId;
+        }
+
+        function getUserEmail() {
+            return localStorage.getItem('userEmail') || 'guest@email.com';
+        }
+
+        function storeOrder(orderId) {
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            orders.push({
+                id: orderId,
+                product: CONFIG.product.name,
+                amount: CONFIG.product.price,
+                status: 'pending',
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('orders', JSON.stringify(orders));
+        }
+
+        function updateOrderStatus(orderId, status) {
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = status;
+                localStorage.setItem('orders', JSON.stringify(orders));
+            }
+        }
+
+        function openUPIApp(app) {
+            const upiId = 'paytmqr65y99n@ptys';
+            const merchantName = 'Script Mastery';
+            const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(merchantName)}&am=${CONFIG.product.price}&cu=INR&tn=${encodeURIComponent(CONFIG.product.name)}&txn=${currentOrderId}`;
+            window.location.href = upiLink;
+        }
+
+        function closeModal() {
+            document.getElementById('paymentModal').classList.add('hidden');
+            document.getElementById('manualModal').classList.add('hidden');
+            if (verificationInterval) {
+                clearInterval(verificationInterval);
+            }
+            isProcessing = false;
+        }
+
+        function retryPayment() {
+            document.getElementById('failedScreen').classList.add('hidden');
+            startPayment();
+        }
+
+        // ============================================
+        // 7. ADMIN: VIEW ORDERS (Optional)
+        // ============================================
+        function view
